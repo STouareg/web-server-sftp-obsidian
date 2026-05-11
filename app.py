@@ -149,11 +149,15 @@ def download_from_sftp():
     if not validate_config():
         return
 
-    os.makedirs(os.path.dirname(LOCAL_FILE), exist_ok=True)
+    dest_dir = os.path.dirname(os.path.abspath(LOCAL_FILE))
+    if not dest_dir:
+        dest_dir = "."
+    os.makedirs(dest_dir, exist_ok=True)
 
     old_hash = file_hash(LOCAL_FILE)
 
-    fd, tmp_path = tempfile.mkstemp(prefix="ks_", suffix=".md")
+    # Same dir as LOCAL_FILE: os.replace cannot cross filesystems (/tmp vs volume).
+    fd, tmp_path = tempfile.mkstemp(prefix="ks_", suffix=".md", dir=dest_dir)
     os.close(fd)
 
     transport = None
