@@ -1,20 +1,38 @@
-FROM python:3.12-slim-bookworm
+# --- builder: compilers + dev headers only here ---
+FROM python:3.12-slim-bookworm AS builder
 
-WORKDIR /app
-
-COPY requirements.txt .
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        build-essential \
        libffi-dev \
        libssl-dev \
-    && pip install --no-cache-dir -r requirements.txt \
-    && apt-get purge -y build-essential libffi-dev libssl-dev \
-    && apt-get install -y --no-install-recommends libffi8 libssl3 \
-    && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
+WORKDIR /build
+COPY requirements.txt .
+
+RUN python -m venv /venv
+ENV PATH="/venv/bin:$PATH"
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+# --- runtime: no gcc; only libc SSL/FFI for wheels ---
+FROM python:3.12-slim-bookworm
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/venv/bin:$PATH"
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libffi8 libssl3 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /venv /venv
+
+WORKDIR /app
 COPY app.py gunicorn.conf.py .
 
 EXPOSE 8080

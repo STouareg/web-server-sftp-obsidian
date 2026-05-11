@@ -4,6 +4,7 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 
 ## What runs in the container
 
+- **Dockerfile** is **multi-stage**: dependencies are installed into a **`/venv`** in a builder image (with `build-essential` and `-dev` packages), then only **`/venv`**, your app files, and runtime **`libssl3` / `libffi8`** are copied into the final image—no compiler or headers in the image you run.
 - **Gunicorn** (one sync worker) serves the web app on port **8080** inside the container; `gunicorn.conf.py` starts the SFTP sync thread in `post_fork` so it runs with the worker process.
 - A background thread runs an SFTP sync on a fixed interval (default **5 minutes**).
 - The synced file is compared with a SHA-256 hash of the previous copy; the file on disk is only replaced when the content changes.
