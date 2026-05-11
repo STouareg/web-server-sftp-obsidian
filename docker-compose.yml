@@ -1,0 +1,37 @@
+services:
+  ks-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    image: ks-web:local
+    container_name: ks-web
+    restart: unless-stopped
+
+    ports:
+      - "8088:8080"
+
+    environment:
+      SFTP_HOST: ${SFTP_HOST}
+      SFTP_PORT: ${SFTP_PORT:-22}
+      SFTP_USER: ${SFTP_USER}
+      SFTP_PASSWORD: ${SFTP_PASSWORD}
+      SFTP_REMOTE_FILE: ${SFTP_REMOTE_FILE}
+      LOCAL_FILE: ${LOCAL_FILE:-/data/KS_actual.md}
+      CHECK_INTERVAL_SECONDS: ${CHECK_INTERVAL_SECONDS:-300}
+
+    volumes:
+      - /opt/ks-web/data:/data
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=5)",
+        ]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
