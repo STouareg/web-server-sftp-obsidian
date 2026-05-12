@@ -61,7 +61,6 @@ _DEFAULT_LOGO_URL = (
     "669f8b8b68d5838eeaae1296_Group%206.svg"
 )
 _DEFAULT_LOGO_LINK_URL = "https://www.skinia.com.ua/"
-_DEFAULT_LOGO_LINK_TEXT = "Церква «Скинія»"
 
 
 def logo_url_resolved():
@@ -82,10 +81,12 @@ def logo_link_url_resolved():
 
 
 def logo_link_text_resolved():
+    """Optional second line under the logo; None → image-only (image still links to LOGO_LINK_URL)."""
     v = os.environ.get("LOGO_LINK_TEXT")
     if v is None:
-        return _DEFAULT_LOGO_LINK_TEXT
-    return v.strip() or _DEFAULT_LOGO_LINK_TEXT
+        return None
+    t = v.strip()
+    return t or None
 
 
 def logo_head_extras():
@@ -97,26 +98,35 @@ def logo_head_extras():
 
 
 def logo_body_html():
-    chunks = []
     u = logo_url_resolved()
-    if u:
-        safe = escape(u)
-        chunks.append(
-            f'<div class="site-logo-mark"><a href="/" aria-label="Home">'
-            f'<img src="{safe}" alt="" loading="lazy" decoding="async" /></a></div>'
-        )
+    if not u:
+        return ""
+    safe_img = escape(u)
     link_u = logo_link_url_resolved()
+    label = logo_link_text_resolved()
+
     if link_u:
-        safe_u = escape(link_u)
-        safe_l = escape(logo_link_text_resolved())
-        chunks.append(
+        safe_link = escape(link_u)
+        href = safe_link
+        target = ' target="_blank" rel="noopener noreferrer"'
+        aria = escape(label) if label else "Відкрити сайт церкви (нова вкладка)"
+    else:
+        href = "/"
+        target = ""
+        aria = "Головна"
+
+    parts = [
+        f'<div class="site-logo-mark"><a href="{href}" aria-label="{aria}"{target}>'
+        f'<img src="{safe_img}" alt="" loading="lazy" decoding="async" /></a></div>'
+    ]
+    if link_u and label:
+        safe_l = escape(label)
+        parts.append(
             f'<div class="site-logo-sub">'
-            f'<a class="site-logo-link" href="{safe_u}" target="_blank" rel="noopener noreferrer">'
+            f'<a class="site-logo-link" href="{escape(link_u)}" target="_blank" rel="noopener noreferrer">'
             f"{safe_l}</a></div>"
         )
-    if not chunks:
-        return ""
-    return f'<div class="site-logo">{"".join(chunks)}</div>'
+    return f'<div class="site-logo">{"".join(parts)}</div>'
 
 
 PAGE_TEMPLATE = """

@@ -46,8 +46,8 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 | `LOCAL_FILE` | No | `/data/note.md` | Path to the synced `.md` in the container; the **file name** is used in empty/not-found messages and (unless `PAGE_TITLE` is set) for the browser tab title |
 | `PAGE_TITLE` | No | *(from `LOCAL_FILE`)* | Overrides the `<title>` text; if unset, the tab title is the basename of `LOCAL_FILE` without `.md`, with underscores replaced by spaces |
 | `LOGO_URL` | No | [default SVG](https://cdn.prod.website-files.com/669e6ea2fe9a21fd38d7d4d1/669f8b8b68d5838eeaae1296_Group%206.svg) | Header logo and tab favicon. Set **`LOGO_URL=`** (empty) to hide both. |
-| `LOGO_LINK_URL` | No | [skinia.com.ua](https://www.skinia.com.ua/) | Link under the logo (opens in a new tab). Set **`LOGO_LINK_URL=`** (empty) to hide. |
-| `LOGO_LINK_TEXT` | No | `Церква «Скинія»` | Label for that link (matches [Церква «Скинія»](https://www.skinia.com.ua/) site title). |
+| `LOGO_LINK_URL` | No | [skinia.com.ua](https://www.skinia.com.ua/) | URL the **logo image** opens (new tab). Set **`LOGO_LINK_URL=`** (empty) so the logo only reloads this app (`/`). |
+| `LOGO_LINK_TEXT` | No | *(none)* | If set, adds a **second line** of text under the logo linking to the same `LOGO_LINK_URL`. Omit for **image-only** (clickable logo, no caption). |
 | `PAGE_FOOTER` | No | `All rights reserved.` | Text at the bottom of **`/`**. If the variable is **set but empty**, the footer is **omitted**. Use any short line you like (© notice, etc.). |
 | `CHECK_INTERVAL_SECONDS` | No | `300` | Seconds between SFTP sync attempts |
 
