@@ -134,13 +134,13 @@ PAGE_TEMPLATE = """
 <html lang="uk">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta http-equiv="refresh" content="60">
   <title>{page_title}</title>
   {head_extras}
   <style>
     html {{
-      height: 100%;
+      min-height: 100%;
     }}
     body {{
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -151,34 +151,52 @@ PAGE_TEMPLATE = """
       line-height: 1.6;
       color: #222;
       background: #fafafa;
+      min-height: 100%;
     }}
     main {{
       background: white;
       padding: 28px;
       border-radius: 14px;
       box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-      max-height: calc(100vh - 5.5rem);
-      max-height: calc(100dvh - 5.5rem);
-      overflow-y: auto;
       overflow-x: hidden;
-      scrollbar-gutter: stable;
-      scrollbar-width: auto;
-      scrollbar-color: #a8a8a8 #ececec;
     }}
-    main::-webkit-scrollbar {{
-      width: 18px;
+    @media (min-width: 769px) {{
+      html {{
+        height: 100%;
+      }}
+      main {{
+        max-height: calc(100dvh - 5.5rem);
+        max-height: calc(100vh - 5.5rem);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-gutter: stable;
+        scrollbar-width: auto;
+        scrollbar-color: #a8a8a8 #ececec;
+      }}
+      main::-webkit-scrollbar {{
+        width: 18px;
+      }}
+      main::-webkit-scrollbar-track {{
+        background: #ececec;
+        border-radius: 12px;
+      }}
+      main::-webkit-scrollbar-thumb {{
+        background: #a8a8a8;
+        border-radius: 12px;
+        border: 3px solid #ececec;
+      }}
+      main::-webkit-scrollbar-thumb:hover {{
+        background: #888888;
+      }}
     }}
-    main::-webkit-scrollbar-track {{
-      background: #ececec;
-      border-radius: 12px;
-    }}
-    main::-webkit-scrollbar-thumb {{
-      background: #a8a8a8;
-      border-radius: 12px;
-      border: 3px solid #ececec;
-    }}
-    main::-webkit-scrollbar-thumb:hover {{
-      background: #888888;
+    @media (max-width: 768px) {{
+      body {{
+        margin: 16px auto 24px;
+        padding: 0 14px;
+      }}
+      main {{
+        padding: 20px;
+      }}
     }}
     .site-logo {{
       margin: 0 0 1.25rem;
