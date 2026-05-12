@@ -59,6 +59,8 @@ _DEFAULT_LOGO_URL = (
     "https://cdn.prod.website-files.com/669e6ea2fe9a21fd38d7d4d1/"
     "669f8b8b68d5838eeaae1296_Group%206.svg"
 )
+_DEFAULT_LOGO_LINK_URL = "https://www.skinia.com.ua/"
+_DEFAULT_LOGO_LINK_TEXT = "Церква «Скинія»"
 
 
 def logo_url_resolved():
@@ -67,6 +69,20 @@ def logo_url_resolved():
         u = os.environ["LOGO_URL"].strip()
         return u or None
     return _DEFAULT_LOGO_URL
+
+
+def logo_link_url_resolved():
+    if "LOGO_LINK_URL" in os.environ:
+        u = os.environ["LOGO_LINK_URL"].strip()
+        return u or None
+    return _DEFAULT_LOGO_LINK_URL
+
+
+def logo_link_text_resolved():
+    if "LOGO_LINK_TEXT" in os.environ:
+        t = os.environ["LOGO_LINK_TEXT"].strip()
+        return t if t else _DEFAULT_LOGO_LINK_TEXT
+    return _DEFAULT_LOGO_LINK_TEXT
 
 
 def logo_head_extras():
@@ -78,14 +94,26 @@ def logo_head_extras():
 
 
 def logo_body_html():
+    chunks = []
     u = logo_url_resolved()
-    if not u:
+    if u:
+        safe = escape(u)
+        chunks.append(
+            f'<div class="site-logo-mark"><a href="/" aria-label="Home">'
+            f'<img src="{safe}" alt="" loading="lazy" decoding="async" /></a></div>'
+        )
+    link_u = logo_link_url_resolved()
+    if link_u:
+        safe_u = escape(link_u)
+        safe_l = escape(logo_link_text_resolved())
+        chunks.append(
+            f'<div class="site-logo-sub">'
+            f'<a class="site-logo-link" href="{safe_u}" target="_blank" rel="noopener noreferrer">'
+            f"{safe_l}</a></div>"
+        )
+    if not chunks:
         return ""
-    safe = escape(u)
-    return (
-        f'<div class="site-logo"><a href="/" aria-label="Home">'
-        f'<img src="{safe}" alt="" loading="lazy" decoding="async" /></a></div>'
-    )
+    return f'<div class="site-logo">{"".join(chunks)}</div>'
 
 
 PAGE_TEMPLATE = """
@@ -143,15 +171,27 @@ PAGE_TEMPLATE = """
       margin: 0 0 1.25rem;
       text-align: center;
     }}
-    .site-logo a {{
+    .site-logo-mark a {{
       display: inline-block;
       line-height: 0;
     }}
-    .site-logo img {{
+    .site-logo-mark img {{
       max-height: 64px;
       width: auto;
       height: auto;
       vertical-align: middle;
+    }}
+    .site-logo-sub {{
+      margin-top: 0.45rem;
+      line-height: 1.35;
+    }}
+    .site-logo-link {{
+      font-size: 0.95rem;
+      color: #1a5fb4;
+      text-decoration: none;
+    }}
+    .site-logo-link:hover {{
+      text-decoration: underline;
     }}
     h1, h2, h3 {{
       line-height: 1.25;
