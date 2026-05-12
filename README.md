@@ -45,15 +45,16 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 | `SFTP_REMOTE_FILE` | Yes | — | Remote path to the `.md` file |
 | `LOCAL_FILE` | No | `/data/note.md` | Path to the synced `.md` in the container; the **file name** is used in empty/not-found messages and (unless `PAGE_TITLE` is set) for the browser tab title |
 | `PAGE_TITLE` | No | *(from `LOCAL_FILE`)* | Overrides the `<title>` text; if unset, the tab title is the basename of `LOCAL_FILE` without `.md`, with underscores replaced by spaces |
+| `PAGE_FOOTER` | No | `All rights reserved.` | Text at the bottom of **`/`**. If the variable is **set but empty**, the footer is **omitted**. Use any short line you like (© notice, etc.). |
 | `CHECK_INTERVAL_SECONDS` | No | `300` | Seconds between SFTP sync attempts |
 
 ## HTTP routes
 
 | Path | Purpose |
 |------|---------|
-| `/` | Markdown rendered as HTML |
+| `/` | Markdown rendered as HTML; footer is `PAGE_FOOTER` (default **All rights reserved.**), not live sync text |
 | `/raw` | Plain text of the synced file |
-| `/status` | Last sync line (same footer as on `/`) |
+| `/status` | Last SFTP sync line (same text as written to `/data/status.txt`) |
 | `/health` | Plain `OK` for health checks |
 
 ### Page rendering (Obsidian-friendly)
@@ -63,12 +64,12 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 
 ## Failures and improving error output
 
-**Today:** sync problems are summarized in one line written to `/data/status.txt` and shown on **`/`** (footer) and **`/status`**. The same failure is printed to the container **stdout** with a full **Python traceback** (open **container logs** in Portainer or `docker logs web-sftp-obsidian`).
+**Today:** sync problems are summarized in one line written to `/data/status.txt` and returned on **`/status`** (and printed to container **stdout** with a full **Python traceback** on errors). Open **container logs** in Portainer or `docker logs web-sftp-obsidian` for details. The main page **`/`** shows a small **footer** from **`PAGE_FOOTER`** (default *All rights reserved.*), not the live sync line.
 
 **Ways to improve output when something fails** (optional follow-ups for this repo or your fork):
 
 - **Richer `/status`**: return last *N* lines, or JSON with fields such as `time`, `ok`, `message`, and `error_type` (configuration vs network vs authentication), without dumping secrets.
-- **Clearer HTML on `/`**: when `LOCAL_FILE` is missing or sync never succeeded, show a dedicated panel (not only the generic “waiting” text) with the latest status line and a hint to check env vars and SFTP path.
+- **Clearer HTML on `/`**: when `LOCAL_FILE` is missing or sync never succeeded, show a dedicated panel (not only the generic “waiting” text) with a hint to check env vars and SFTP path, or surface the latest line from **`/status`** if you prefer.
 - **Logging**: use the **`logging`** module with a structured format (timestamp, level, message) instead of only `print` / `traceback.print_exc`, or log to a file under `/data` for persistence across quick log rotations.
 - **Health check**: optionally make **`/health`** reflect sync health (for example HTTP 503 if the last sync failed and there is no local file yet), so orchestrators mark the container unhealthy; keep a separate **`/health/live`** if you still want a trivial liveness probe.
 - **User-facing messages**: map common Paramiko/socket errors to short explanations (timeout, refused connection, auth failed, path not found) so the footer is easier to read than raw exceptions.

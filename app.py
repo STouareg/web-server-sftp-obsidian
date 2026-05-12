@@ -45,6 +45,16 @@ def page_title_text():
     return base or "Notes"
 
 
+def page_footer_html():
+    """HTML fragment under the note. Unset env → default line; PAGE_FOOTER= (empty) → no footer."""
+    if "PAGE_FOOTER" in os.environ:
+        text = os.environ["PAGE_FOOTER"].strip()
+        if not text:
+            return ""
+        return f'<div class="page-footer">{escape(text)}</div>'
+    return '<div class="page-footer">All rights reserved.</div>'
+
+
 PAGE_TEMPLATE = """
 <!doctype html>
 <html lang="uk">
@@ -145,7 +155,7 @@ PAGE_TEMPLATE = """
       font-size: 1.08em;
       font-weight: 600;
     }}
-    .status {{
+    .page-footer {{
       color: #666;
       font-size: 13px;
       margin-top: 30px;
@@ -157,7 +167,7 @@ PAGE_TEMPLATE = """
 <body>
   <main>
     {content}
-    <div class="status">{status}</div>
+    {footer}
   </main>
   <script>
   (function () {{
@@ -365,7 +375,7 @@ def index():
     return Response(
         PAGE_TEMPLATE.format(
             content=content,
-            status=read_status(),
+            footer=page_footer_html(),
             page_title=escape(page_title_text()),
         ),
         mimetype="text/html",
