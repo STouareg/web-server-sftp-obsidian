@@ -405,23 +405,26 @@ PAGE_TEMPLATE = """
       flex-wrap: wrap;
       align-items: center;
       justify-content: flex-end;
-      gap: 8px 10px;
+      gap: 6px;
       margin: 0 0 16px;
-      font-size: 13px;
-    }}
-    .theme-switcher-label {{
-      color: var(--text-muted);
-      margin-right: auto;
     }}
     .theme-switcher button {{
-      font: inherit;
-      font-size: 12px;
-      padding: 6px 10px;
-      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+      padding: 9px;
+      min-width: 40px;
+      min-height: 40px;
+      box-sizing: border-box;
+      border-radius: 10px;
       border: 1px solid var(--border);
       background: var(--bg-body);
       color: var(--text-secondary);
       cursor: pointer;
+    }}
+    .theme-switcher button svg {{
+      flex-shrink: 0;
     }}
     .theme-switcher button:hover {{
       border-color: var(--text-muted);
@@ -431,17 +434,21 @@ PAGE_TEMPLATE = """
       border-color: var(--link);
       color: var(--text);
       background: var(--details-bg);
-      font-weight: 600;
     }}
   </style>
 </head>
 <body>
   <main>
     <div class="theme-switcher" role="group" aria-label="Тема оформлення">
-      <span class="theme-switcher-label">Тема</span>
-      <button type="button" data-theme-value="system" aria-pressed="false">Системна</button>
-      <button type="button" data-theme-value="light" aria-pressed="false">Світла</button>
-      <button type="button" data-theme-value="dark" aria-pressed="false">Темна</button>
+      <button type="button" data-theme-value="system" aria-pressed="false" aria-label="Системна тема" title="Системна">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/></svg>
+      </button>
+      <button type="button" data-theme-value="light" aria-pressed="false" aria-label="Світла тема" title="Світла">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m13.02-13.02l-1.41 1.41"/></svg>
+      </button>
+      <button type="button" data-theme-value="dark" aria-pressed="false" aria-label="Темна тема" title="Темна">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
     </div>
     {logo}
     {content}
