@@ -137,6 +137,18 @@ PAGE_TEMPLATE = """
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta http-equiv="refresh" content="60">
   <title>{page_title}</title>
+  <script>
+  (function () {{
+    try {{
+      var k = "web-sftp-obsidian-theme";
+      var v = localStorage.getItem(k);
+      if (v === "light" || v === "dark")
+        document.documentElement.setAttribute("data-theme", v);
+      else
+        document.documentElement.removeAttribute("data-theme");
+    }} catch (e) {{}}
+  }})();
+  </script>
   {head_extras}
   <style>
     :root {{
@@ -161,7 +173,7 @@ PAGE_TEMPLATE = """
       --scrollbar-thumb-hover: #888888;
     }}
     @media (prefers-color-scheme: dark) {{
-      :root {{
+      :root:not([data-theme="light"]):not([data-theme="dark"]) {{
         --bg-body: #121212;
         --bg-card: #1e1e1e;
         --text: #e8e8e8;
@@ -181,6 +193,30 @@ PAGE_TEMPLATE = """
         --scrollbar-thumb: #666666;
         --scrollbar-thumb-hover: #888888;
       }}
+    }}
+    :root[data-theme="dark"] {{
+      color-scheme: dark;
+      --bg-body: #121212;
+      --bg-card: #1e1e1e;
+      --text: #e8e8e8;
+      --text-secondary: #b0b0b0;
+      --text-muted: #9a9a9a;
+      --border: #404040;
+      --border-soft: #333333;
+      --code-bg: #2d2d2d;
+      --mark-bg: #5c4f12;
+      --mark-text: #f5e6a8;
+      --link: #7eb8ff;
+      --details-border: #3d3d3d;
+      --details-bg: #252525;
+      --summary-bg: #2c2c2c;
+      --shadow: rgba(0, 0, 0, 0.4);
+      --scrollbar-track: #333333;
+      --scrollbar-thumb: #666666;
+      --scrollbar-thumb-hover: #888888;
+    }}
+    :root[data-theme="light"] {{
+      color-scheme: light;
     }}
     html {{
       min-height: 100%;
@@ -364,10 +400,49 @@ PAGE_TEMPLATE = """
       border-top: 1px solid var(--border-soft);
       padding-top: 12px;
     }}
+    .theme-switcher {{
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px 10px;
+      margin: 0 0 16px;
+      font-size: 13px;
+    }}
+    .theme-switcher-label {{
+      color: var(--text-muted);
+      margin-right: auto;
+    }}
+    .theme-switcher button {{
+      font: inherit;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-body);
+      color: var(--text-secondary);
+      cursor: pointer;
+    }}
+    .theme-switcher button:hover {{
+      border-color: var(--text-muted);
+      color: var(--text);
+    }}
+    .theme-switcher button[aria-pressed="true"] {{
+      border-color: var(--link);
+      color: var(--text);
+      background: var(--details-bg);
+      font-weight: 600;
+    }}
   </style>
 </head>
 <body>
   <main>
+    <div class="theme-switcher" role="group" aria-label="Тема оформлення">
+      <span class="theme-switcher-label">Тема</span>
+      <button type="button" data-theme-value="system" aria-pressed="false">Системна</button>
+      <button type="button" data-theme-value="light" aria-pressed="false">Світла</button>
+      <button type="button" data-theme-value="dark" aria-pressed="false">Темна</button>
+    </div>
     {logo}
     {content}
     {footer}
@@ -418,6 +493,37 @@ PAGE_TEMPLATE = """
       document.addEventListener("DOMContentLoaded", runCollapsibles);
     else
       runCollapsibles();
+  }})();
+  (function () {{
+    var key = "web-sftp-obsidian-theme";
+    var buttons = document.querySelectorAll(".theme-switcher button[data-theme-value]");
+    function current() {{
+      var t = document.documentElement.getAttribute("data-theme");
+      if (t === "light" || t === "dark") return t;
+      return "system";
+    }}
+    function syncButtons() {{
+      var c = current();
+      for (var i = 0; i < buttons.length; i++) {{
+        var b = buttons[i];
+        b.setAttribute("aria-pressed", b.getAttribute("data-theme-value") === c ? "true" : "false");
+      }}
+    }}
+    function apply(mode) {{
+      if (mode === "light" || mode === "dark") {{
+        document.documentElement.setAttribute("data-theme", mode);
+        try {{ localStorage.setItem(key, mode); }} catch (e) {{}}
+      }} else {{
+        document.documentElement.removeAttribute("data-theme");
+        try {{ localStorage.removeItem(key); }} catch (e) {{}}
+      }}
+      syncButtons();
+    }}
+    for (var i = 0; i < buttons.length; i++)
+      buttons[i].addEventListener("click", function () {{
+        apply(this.getAttribute("data-theme-value"));
+      }});
+    syncButtons();
   }})();
   </script>
 </body>

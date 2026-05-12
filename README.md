@@ -62,7 +62,7 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 
 ### Page rendering (Obsidian-friendly)
 
-- **Light / dark** follows the **system** setting (`prefers-color-scheme`: enable Dark Mode on the phone or OS to use the night palette). There is no separate toggle in the app.
+- **Light / dark**: use the **Тема** buttons at the top of the page (**Системна** / **Світла** / **Темна**). **Системна** follows the OS (`prefers-color-scheme`). The choice is stored in the browser (`localStorage` key `web-sftp-obsidian-theme`).
 - **`==text==`** (Obsidian highlights) becomes `<mark>` with a soft yellow background (`pymdownx.mark`).
 - **`#` / `##` / `###`** sections are wrapped in **`<details>`** in the browser: they start **expanded**; click the header bar to collapse or expand that section and everything under it until the next heading of the same or higher level. Headings **`####` and below** are left as normal static headings.
 
