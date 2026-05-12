@@ -1,0 +1,25 @@
+---
+description: After code or config changes, suggest a concise git commit subject (and optional body).
+alwaysApply: true
+---
+
+# Commit message suggestions
+
+When this session includes **meaningful edits** to the repository (code, tests, config, or docs the user cares to version), end your **final reply** with a short **suggested commit**, unless the user explicitly asked not to.
+
+## Format
+
+- One line **subject** (imperative mood, ~72 characters or less), optionally prefixed with a type: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, etc.
+- If the change is non-obvious, add a **blank line** and 1–3 bullet lines for the **body** (what/why, not implementation trivia).
+
+## Example block (use a markdown heading so it is easy to spot)
+
+```markdown
+### Suggested commit
+
+fix: correct anchor ids after collapsible headings
+
+- Preserve heading `id` when wrapping in `<details>` so TOC links work.
+```
+
+If there were **no** file changes, omit the suggestion.
