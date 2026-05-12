@@ -98,11 +98,15 @@ PAGE_TEMPLATE = """
   <title>{page_title}</title>
   {head_extras}
   <style>
+    html {{
+      height: 100%;
+    }}
     body {{
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       max-width: 900px;
-      margin: 40px auto;
+      margin: 28px auto 32px;
       padding: 0 20px;
+      box-sizing: border-box;
       line-height: 1.6;
       color: #222;
       background: #fafafa;
@@ -112,6 +116,28 @@ PAGE_TEMPLATE = """
       padding: 28px;
       border-radius: 14px;
       box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      max-height: calc(100vh - 5.5rem);
+      max-height: calc(100dvh - 5.5rem);
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-gutter: stable;
+      scrollbar-width: thin;
+      scrollbar-color: #bdbdbd #f0f0f0;
+    }}
+    main::-webkit-scrollbar {{
+      width: 10px;
+    }}
+    main::-webkit-scrollbar-track {{
+      background: #f0f0f0;
+      border-radius: 10px;
+    }}
+    main::-webkit-scrollbar-thumb {{
+      background: #bdbdbd;
+      border-radius: 10px;
+      border: 2px solid #f0f0f0;
+    }}
+    main::-webkit-scrollbar-thumb:hover {{
+      background: #9e9e9e;
     }}
     .site-logo {{
       margin: 0 0 1.25rem;
