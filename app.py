@@ -142,59 +142,16 @@ PAGE_TEMPLATE = """
     try {{
       var k = "web-sftp-obsidian-theme";
       var v = localStorage.getItem(k);
-      if (v === "light" || v === "dark")
-        document.documentElement.setAttribute("data-theme", v);
+      if (v === "light")
+        document.documentElement.setAttribute("data-theme", "light");
       else
-        document.documentElement.removeAttribute("data-theme");
+        document.documentElement.setAttribute("data-theme", "dark");
     }} catch (e) {{}}
   }})();
   </script>
   {head_extras}
   <style>
     :root {{
-      color-scheme: light dark;
-      --bg-body: #fafafa;
-      --bg-card: #ffffff;
-      --text: #222222;
-      --text-secondary: #555555;
-      --text-muted: #666666;
-      --border: #dddddd;
-      --border-soft: #eeeeee;
-      --code-bg: #f2f2f2;
-      --mark-bg: #fff3bf;
-      --mark-text: inherit;
-      --link: #1a5fb4;
-      --details-border: #e8e8e8;
-      --details-bg: #fcfcfc;
-      --summary-bg: #f4f4f4;
-      --shadow: rgba(0, 0, 0, 0.08);
-      --scrollbar-track: #ececec;
-      --scrollbar-thumb: #a8a8a8;
-      --scrollbar-thumb-hover: #888888;
-    }}
-    @media (prefers-color-scheme: dark) {{
-      :root:not([data-theme="light"]):not([data-theme="dark"]) {{
-        --bg-body: #121212;
-        --bg-card: #1e1e1e;
-        --text: #e8e8e8;
-        --text-secondary: #b0b0b0;
-        --text-muted: #9a9a9a;
-        --border: #404040;
-        --border-soft: #333333;
-        --code-bg: #2d2d2d;
-        --mark-bg: #5c4f12;
-        --mark-text: #f5e6a8;
-        --link: #7eb8ff;
-        --details-border: #3d3d3d;
-        --details-bg: #252525;
-        --summary-bg: #2c2c2c;
-        --shadow: rgba(0, 0, 0, 0.4);
-        --scrollbar-track: #333333;
-        --scrollbar-thumb: #666666;
-        --scrollbar-thumb-hover: #888888;
-      }}
-    }}
-    :root[data-theme="dark"] {{
       color-scheme: dark;
       --bg-body: #121212;
       --bg-card: #1e1e1e;
@@ -217,6 +174,24 @@ PAGE_TEMPLATE = """
     }}
     :root[data-theme="light"] {{
       color-scheme: light;
+      --bg-body: #fafafa;
+      --bg-card: #ffffff;
+      --text: #222222;
+      --text-secondary: #555555;
+      --text-muted: #666666;
+      --border: #dddddd;
+      --border-soft: #eeeeee;
+      --code-bg: #f2f2f2;
+      --mark-bg: #fff3bf;
+      --mark-text: inherit;
+      --link: #1a5fb4;
+      --details-border: #e8e8e8;
+      --details-bg: #fcfcfc;
+      --summary-bg: #f4f4f4;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --scrollbar-track: #ececec;
+      --scrollbar-thumb: #a8a8a8;
+      --scrollbar-thumb-hover: #888888;
     }}
     html {{
       min-height: 100%;
@@ -290,9 +265,21 @@ PAGE_TEMPLATE = """
         padding: 20px;
       }}
     }}
-    .site-logo {{
+    .page-top {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px 16px;
       margin: 0 0 1.25rem;
-      text-align: center;
+      flex-wrap: wrap;
+    }}
+    .page-top-logo {{
+      flex: 1;
+      min-width: 0;
+    }}
+    .site-logo {{
+      margin: 0;
+      text-align: left;
     }}
     .site-logo-mark a {{
       display: inline-block;
@@ -406,7 +393,8 @@ PAGE_TEMPLATE = """
       align-items: center;
       justify-content: flex-end;
       gap: 6px;
-      margin: 0 0 16px;
+      margin: 0;
+      flex-shrink: 0;
     }}
     .theme-switcher button {{
       display: inline-flex;
@@ -439,18 +427,17 @@ PAGE_TEMPLATE = """
 </head>
 <body>
   <main>
-    <div class="theme-switcher" role="group" aria-label="Тема оформлення">
-      <button type="button" data-theme-value="system" aria-pressed="false" aria-label="Системна тема" title="Системна">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/></svg>
-      </button>
-      <button type="button" data-theme-value="light" aria-pressed="false" aria-label="Світла тема" title="Світла">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m13.02-13.02l-1.41 1.41"/></svg>
-      </button>
-      <button type="button" data-theme-value="dark" aria-pressed="false" aria-label="Темна тема" title="Темна">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      </button>
+    <div class="page-top">
+      <div class="page-top-logo">{logo}</div>
+      <div class="theme-switcher" role="group" aria-label="Тема оформлення">
+        <button type="button" data-theme-value="light" aria-pressed="false" aria-label="Світла тема" title="Світла">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m13.02-13.02l-1.41 1.41"/></svg>
+        </button>
+        <button type="button" data-theme-value="dark" aria-pressed="false" aria-label="Темна тема" title="Темна">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </div>
     </div>
-    {logo}
     {content}
     {footer}
   </main>
@@ -506,8 +493,8 @@ PAGE_TEMPLATE = """
     var buttons = document.querySelectorAll(".theme-switcher button[data-theme-value]");
     function current() {{
       var t = document.documentElement.getAttribute("data-theme");
-      if (t === "light" || t === "dark") return t;
-      return "system";
+      if (t === "light") return "light";
+      return "dark";
     }}
     function syncButtons() {{
       var c = current();
@@ -517,13 +504,9 @@ PAGE_TEMPLATE = """
       }}
     }}
     function apply(mode) {{
-      if (mode === "light" || mode === "dark") {{
-        document.documentElement.setAttribute("data-theme", mode);
-        try {{ localStorage.setItem(key, mode); }} catch (e) {{}}
-      }} else {{
-        document.documentElement.removeAttribute("data-theme");
-        try {{ localStorage.removeItem(key); }} catch (e) {{}}
-      }}
+      if (mode !== "light") mode = "dark";
+      document.documentElement.setAttribute("data-theme", mode);
+      try {{ localStorage.setItem(key, mode); }} catch (e) {{}}
       syncButtons();
     }}
     for (var i = 0; i < buttons.length; i++)

@@ -62,7 +62,7 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 
 ### Page rendering (Obsidian-friendly)
 
-- **Light / dark**: use the three **icon** controls at the top of the page (monitor = follow **system** / OS `prefers-color-scheme`, sun = **light**, moon = **dark**). The choice is stored in the browser (`localStorage` key `web-sftp-obsidian-theme`).
+- **Light / dark**: the **sun** and **moon** icons share the top row with the logo (logo left, icons right). **Dark** is the default; **light** is remembered in the browser (`localStorage` key `web-sftp-obsidian-theme`, values `light` or `dark`).
 - **`==text==`** (Obsidian highlights) becomes `<mark>` with a soft yellow background (`pymdownx.mark`).
 - **`#` / `##` / `###`** sections are wrapped in **`<details>`** in the browser: they start **expanded**; click the header bar to collapse or expand that section and everything under it until the next heading of the same or higher level. Headings **`####` and below** are left as normal static headings.
 
