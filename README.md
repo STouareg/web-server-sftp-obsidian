@@ -37,6 +37,7 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
+| `TZ` | No | `Europe/Kyiv` | IANA timezone for status timestamps |
 | `SFTP_HOST` | Yes | — | SFTP server hostname or IP |
 | `SFTP_PORT` | No | `22` | SFTP port |
 | `SFTP_USER` | Yes | — | Username |
@@ -56,7 +57,7 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 
 ## Failures and improving error output
 
-**Today:** sync problems are summarized in one line written to `/data/status.txt` and shown on **`/`** (footer) and **`/status`**. The same failure is printed to the container **stdout** with a full **Python traceback** (open **container logs** in Portainer or `docker logs ks-web`).
+**Today:** sync problems are summarized in one line written to `/data/status.txt` and shown on **`/`** (footer) and **`/status`**. The same failure is printed to the container **stdout** with a full **Python traceback** (open **container logs** in Portainer or `docker logs web-sftp-obsidian`).
 
 **Ways to improve output when something fails** (optional follow-ups for this repo or your fork):
 
@@ -69,7 +70,7 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 ## Portainer
 
 - Use **Stacks** with the repository `docker-compose.yml`, or paste the compose YAML.
-- Add **environment variables on the stack** in Portainer using the **same names** as in the table below (`SFTP_HOST`, `SFTP_USER`, and so on). Compose substitutes `${VAR}` at deploy time and passes them into the container; **no changes to `app.py` are required** (it already uses `os.getenv`).
+- Add **environment variables on the stack** in Portainer using the **same names** as in the table below (`SFTP_HOST`, `SFTP_USER`, and so on). Compose substitutes `${VAR}` at deploy time and passes them into the container; **no changes to `app.py` are required** (it already uses `os.getenv`). **`TZ`** defaults to **`Europe/Kyiv`** if omitted.
 - You do **not** need a `.env` file on the server when values come from Portainer.
 - The sample compose binds **`/opt/ks-web/data:/data`**. Create that directory on the Orange Pi (or change the left-hand path to match your host).
 - **ARM (Orange Pi PC Plus, armv7)**: The image uses **`python:3.12-slim-bookworm`** (Debian/glibc), not Alpine. On **32-bit ARM musl** (Alpine), `cryptography` often has no prebuilt wheel and tries to compile with Rust, which fails (as in Portainer logs: `arm-unknown-linux-musleabihf`). Debian slim gets normal manylinux **armv7l** wheels from PyPI instead. Some dependencies (for example **PyNaCl**) may still build **cffi** from source on armv7; the Dockerfile installs **`build-essential`** so the linker and C library headers (`stdlib.h`, `crti.o`, …) are present during `pip install`, then removes those packages to keep the final image smaller.
@@ -80,7 +81,7 @@ For **linux/arm/v7** (32-bit Pi), a Mac build needs **`docker buildx build --pla
 
 If your Mac is Apple Silicon (**arm64**), a default `docker build` produces an **arm64** image, which will **not** run on an **armv7** Orange Pi unless you always pass the correct `--platform` and accept emulation time (or use a remote ARM builder).
 
-Practical options: fix the Dockerfile and **build on the Pi** in Portainer; or build on the Mac with **buildx + `--platform linux/arm/v7` + `--push`** to a registry, then on the Pi use **`image: your-registry/ks-web:tag`** and **remove the `build:` section** from compose so the Pi only pulls layers (no compile on the Pi).
+Practical options: fix the Dockerfile and **build on the Pi** in Portainer; or build on the Mac with **buildx + `--platform linux/arm/v7` + `--push`** to a registry, then on the Pi use **`image: your-registry/web-sftp-obsidian:tag`** and **remove the `build:` section** from compose so the Pi only pulls layers (no compile on the Pi).
 
 ## Local development (without Gunicorn)
 

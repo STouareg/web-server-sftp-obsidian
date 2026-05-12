@@ -8,6 +8,7 @@ import tempfile
 import traceback
 import paramiko
 from datetime import datetime
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 app = Flask(__name__)
 
@@ -18,6 +19,12 @@ SFTP_PASSWORD = os.getenv("SFTP_PASSWORD")
 SFTP_REMOTE_FILE = os.getenv("SFTP_REMOTE_FILE", "/KS_actual.md")
 LOCAL_FILE = os.getenv("LOCAL_FILE", "/data/KS_actual.md")
 CHECK_INTERVAL_SECONDS = int(os.getenv("CHECK_INTERVAL_SECONDS", "300"))
+
+_tz_name = os.getenv("TZ", "Europe/Kyiv")
+try:
+    APP_TZ = ZoneInfo(_tz_name)
+except ZoneInfoNotFoundError:
+    APP_TZ = ZoneInfo("Europe/Kyiv")
 
 STATUS_FILE = "/data/status.txt"
 
@@ -99,7 +106,7 @@ PAGE_TEMPLATE = """
 
 
 def now():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.now(APP_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def write_status(message):

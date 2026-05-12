@@ -1,17 +1,18 @@
 services:
-  ks-web:
+  web-sftp-obsidian:
     build:
       context: .
       dockerfile: Dockerfile
 
-    image: ks-web:local
-    container_name: ks-web
+    image: web-sftp-obsidian:local
+    container_name: web-sftp-obsidian
     restart: unless-stopped
 
     ports:
       - "8088:8080"
 
     environment:
+      TZ: ${TZ:-Europe/Kyiv}
       SFTP_HOST: ${SFTP_HOST}
       SFTP_PORT: ${SFTP_PORT:-22}
       SFTP_USER: ${SFTP_USER}
