@@ -59,7 +59,7 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 ### Page rendering (Obsidian-friendly)
 
 - **`==text==`** (Obsidian highlights) becomes `<mark>` with a soft yellow background (`pymdownx.mark`).
-- **`#` / `##` / `###`** sections are wrapped in **`<details>`** in the browser: click the header bar to expand or collapse that section and everything under it until the next heading of the same or higher level. Headings **`####` and below** are left as normal static headings.
+- **`#` / `##` / `###`** sections are wrapped in **`<details>`** in the browser: they start **expanded**; click the header bar to collapse or expand that section and everything under it until the next heading of the same or higher level. Headings **`####` and below** are left as normal static headings.
 
 ## Failures and improving error output
 

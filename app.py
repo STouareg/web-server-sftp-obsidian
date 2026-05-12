@@ -171,6 +171,7 @@ PAGE_TEMPLATE = """
       var L = level(h.tagName);
       var details = document.createElement("details");
       details.className = "section-collapse";
+      details.open = true;
       var summary = document.createElement("summary");
       var inner = document.createElement(h.tagName.toLowerCase());
       inner.innerHTML = h.innerHTML;
