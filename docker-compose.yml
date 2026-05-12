@@ -12,16 +12,21 @@ services:
     ports:
       - "8088:8080"
 
+    # List form: optional keys (PAGE_FOOTER, LOGO_*) are passed only if set in `.env` or Portainer stack env.
     environment:
-      TZ: ${TZ:-Europe/Kyiv}
-      SFTP_HOST: ${SFTP_HOST}
-      SFTP_PORT: ${SFTP_PORT:-22}
-      SFTP_USER: ${SFTP_USER}
-      SFTP_PASSWORD: ${SFTP_PASSWORD}
-      SFTP_REMOTE_FILE: ${SFTP_REMOTE_FILE}
-      LOCAL_FILE: ${LOCAL_FILE:-/data/note.md}
-      PAGE_TITLE: ${PAGE_TITLE:-}
-      CHECK_INTERVAL_SECONDS: ${CHECK_INTERVAL_SECONDS:-300}
+      - TZ=${TZ:-Europe/Kyiv}
+      - SFTP_HOST=${SFTP_HOST}
+      - SFTP_PORT=${SFTP_PORT:-22}
+      - SFTP_USER=${SFTP_USER}
+      - SFTP_PASSWORD=${SFTP_PASSWORD}
+      - SFTP_REMOTE_FILE=${SFTP_REMOTE_FILE}
+      - LOCAL_FILE=${LOCAL_FILE:-/data/note.md}
+      - PAGE_TITLE=${PAGE_TITLE:-}
+      - CHECK_INTERVAL_SECONDS=${CHECK_INTERVAL_SECONDS:-300}
+      - PAGE_FOOTER
+      - LOGO_URL
+      - LOGO_LINK_URL
+      - LOGO_LINK_TEXT
 
     volumes:
       - /opt/ks-web/data:/data

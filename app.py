@@ -46,13 +46,14 @@ def page_title_text():
 
 
 def page_footer_html():
-    """HTML fragment under the note. Unset env → default line; PAGE_FOOTER= (empty) → no footer."""
-    if "PAGE_FOOTER" in os.environ:
-        text = os.environ["PAGE_FOOTER"].strip()
-        if not text:
-            return ""
-        return f'<div class="page-footer">{escape(text)}</div>'
-    return '<div class="page-footer">All rights reserved.</div>'
+    """Footer under the note. Key omitted → default; empty string → no footer."""
+    raw = os.environ.get("PAGE_FOOTER")
+    if raw is None:
+        return '<div class="page-footer">All rights reserved.</div>'
+    text = raw.strip()
+    if not text:
+        return ""
+    return f'<div class="page-footer">{escape(text)}</div>'
 
 
 _DEFAULT_LOGO_URL = (
@@ -64,25 +65,27 @@ _DEFAULT_LOGO_LINK_TEXT = "Церква «Скинія»"
 
 
 def logo_url_resolved():
-    """Return logo URL, or None to hide logo and favicon."""
-    if "LOGO_URL" in os.environ:
-        u = os.environ["LOGO_URL"].strip()
-        return u or None
-    return _DEFAULT_LOGO_URL
+    """Return logo URL, or None to hide. Key omitted → built-in default."""
+    v = os.environ.get("LOGO_URL")
+    if v is None:
+        return _DEFAULT_LOGO_URL
+    v = v.strip()
+    return v or None
 
 
 def logo_link_url_resolved():
-    if "LOGO_LINK_URL" in os.environ:
-        u = os.environ["LOGO_LINK_URL"].strip()
-        return u or None
-    return _DEFAULT_LOGO_LINK_URL
+    v = os.environ.get("LOGO_LINK_URL")
+    if v is None:
+        return _DEFAULT_LOGO_LINK_URL
+    v = v.strip()
+    return v or None
 
 
 def logo_link_text_resolved():
-    if "LOGO_LINK_TEXT" in os.environ:
-        t = os.environ["LOGO_LINK_TEXT"].strip()
-        return t if t else _DEFAULT_LOGO_LINK_TEXT
-    return _DEFAULT_LOGO_LINK_TEXT
+    v = os.environ.get("LOGO_LINK_TEXT")
+    if v is None:
+        return _DEFAULT_LOGO_LINK_TEXT
+    return v.strip() or _DEFAULT_LOGO_LINK_TEXT
 
 
 def logo_head_extras():
