@@ -43,7 +43,8 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 | `SFTP_USER` | Yes | — | Username |
 | `SFTP_PASSWORD` | Yes | — | Password |
 | `SFTP_REMOTE_FILE` | Yes | — | Remote path to the `.md` file |
-| `LOCAL_FILE` | No | `/data/KS_actual.md` | Where the file is stored in the container (should live under `/data` with the sample volume) |
+| `LOCAL_FILE` | No | `/data/note.md` | Path to the synced `.md` in the container; the **file name** is used in empty/not-found messages and (unless `PAGE_TITLE` is set) for the browser tab title |
+| `PAGE_TITLE` | No | *(from `LOCAL_FILE`)* | Overrides the `<title>` text; if unset, the tab title is the basename of `LOCAL_FILE` without `.md`, with underscores replaced by spaces |
 | `CHECK_INTERVAL_SECONDS` | No | `300` | Seconds between SFTP sync attempts |
 
 ## HTTP routes
@@ -54,6 +55,11 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 | `/raw` | Plain text of the synced file |
 | `/status` | Last sync line (same footer as on `/`) |
 | `/health` | Plain `OK` for health checks |
+
+### Page rendering (Obsidian-friendly)
+
+- **`==text==`** (Obsidian highlights) becomes `<mark>` with a soft yellow background (`pymdownx.mark`).
+- **`#` / `##` / `###`** sections are wrapped in **`<details>`** in the browser: click the header bar to expand or collapse that section and everything under it until the next heading of the same or higher level. Headings **`####` and below** are left as normal static headings.
 
 ## Failures and improving error output
 

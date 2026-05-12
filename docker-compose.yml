@@ -18,7 +18,8 @@ services:
       SFTP_USER: ${SFTP_USER}
       SFTP_PASSWORD: ${SFTP_PASSWORD}
       SFTP_REMOTE_FILE: ${SFTP_REMOTE_FILE}
-      LOCAL_FILE: ${LOCAL_FILE:-/data/KS_actual.md}
+      LOCAL_FILE: ${LOCAL_FILE:-/data/note.md}
+      PAGE_TITLE: ${PAGE_TITLE:-}
       CHECK_INTERVAL_SECONDS: ${CHECK_INTERVAL_SECONDS:-300}
 
     volumes:

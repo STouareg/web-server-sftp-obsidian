@@ -11,6 +11,7 @@ Markdown==3.10.2
 MarkupSafe==3.0.3
 packaging==26.2
 paramiko==3.5.1
+pymdown-extensions==10.14.3
 pycparser==3.0
 PyNaCl==1.6.2
 Werkzeug==3.1.8
