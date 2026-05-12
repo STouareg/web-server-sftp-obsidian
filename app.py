@@ -152,23 +152,23 @@ PAGE_TEMPLATE = """
       overflow-y: auto;
       overflow-x: hidden;
       scrollbar-gutter: stable;
-      scrollbar-width: thin;
-      scrollbar-color: #bdbdbd #f0f0f0;
+      scrollbar-width: auto;
+      scrollbar-color: #a8a8a8 #ececec;
     }}
     main::-webkit-scrollbar {{
-      width: 10px;
+      width: 18px;
     }}
     main::-webkit-scrollbar-track {{
-      background: #f0f0f0;
-      border-radius: 10px;
+      background: #ececec;
+      border-radius: 12px;
     }}
     main::-webkit-scrollbar-thumb {{
-      background: #bdbdbd;
-      border-radius: 10px;
-      border: 2px solid #f0f0f0;
+      background: #a8a8a8;
+      border-radius: 12px;
+      border: 3px solid #ececec;
     }}
     main::-webkit-scrollbar-thumb:hover {{
-      background: #9e9e9e;
+      background: #888888;
     }}
     .site-logo {{
       margin: 0 0 1.25rem;
