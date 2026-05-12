@@ -174,16 +174,16 @@ PAGE_TEMPLATE = """
         scrollbar-color: #a8a8a8 #ececec;
       }}
       main::-webkit-scrollbar {{
-        width: 18px;
+        width: 24px;
       }}
       main::-webkit-scrollbar-track {{
         background: #ececec;
-        border-radius: 12px;
+        border-radius: 14px;
       }}
       main::-webkit-scrollbar-thumb {{
         background: #a8a8a8;
-        border-radius: 12px;
-        border: 3px solid #ececec;
+        border-radius: 14px;
+        border: 4px solid #ececec;
       }}
       main::-webkit-scrollbar-thumb:hover {{
         background: #888888;
@@ -207,7 +207,7 @@ PAGE_TEMPLATE = """
       line-height: 0;
     }}
     .site-logo-mark img {{
-      max-height: 64px;
+      max-height: 48px;
       width: auto;
       height: auto;
       vertical-align: middle;
