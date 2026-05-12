@@ -75,7 +75,7 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 
 ## Portainer
 
-- Use **Stacks** with the repository `docker-compose.yml`, or paste the compose YAML.
+- **“pull access denied for web-sftp-obsidian”**: Compose was trying to **pull** `web-sftp-obsidian:local` from Docker Hub, but that name is only meant as a **local tag after `docker compose build`**. This repo sets **`pull_policy: build`** so a normal **deploy / up** builds from the Git `Dockerfile` instead of pulling. If you still see pull errors, turn off **“Always pull latest image”** / **re-pull only** for this stack when the image is not on a registry, or run a one-time **Build** from Portainer before start.
 - Add **environment variables on the stack** in Portainer using the **same names** as in the table below (`SFTP_HOST`, `SFTP_USER`, and so on). Compose substitutes `${VAR}` at deploy time and passes them into the container; **no changes to `app.py` are required** (it already uses `os.getenv`). **`TZ`** defaults to **`Europe/Kyiv`** if omitted.
 - You do **not** need a `.env` file on the server when values come from Portainer.
 - The sample compose binds **`/opt/ks-web/data:/data`**. Create that directory on the Orange Pi (or change the left-hand path to match your host).
