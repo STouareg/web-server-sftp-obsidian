@@ -55,6 +55,39 @@ def page_footer_html():
     return '<div class="page-footer">All rights reserved.</div>'
 
 
+_DEFAULT_LOGO_URL = (
+    "https://cdn.prod.website-files.com/669e6ea2fe9a21fd38d7d4d1/"
+    "669f8b8b68d5838eeaae1296_Group%206.svg"
+)
+
+
+def logo_url_resolved():
+    """Return logo URL, or None to hide logo and favicon."""
+    if "LOGO_URL" in os.environ:
+        u = os.environ["LOGO_URL"].strip()
+        return u or None
+    return _DEFAULT_LOGO_URL
+
+
+def logo_head_extras():
+    u = logo_url_resolved()
+    if not u:
+        return ""
+    safe = escape(u)
+    return f'  <link rel="icon" href="{safe}" type="image/svg+xml" />'
+
+
+def logo_body_html():
+    u = logo_url_resolved()
+    if not u:
+        return ""
+    safe = escape(u)
+    return (
+        f'<div class="site-logo"><a href="/" aria-label="Home">'
+        f'<img src="{safe}" alt="" loading="lazy" decoding="async" /></a></div>'
+    )
+
+
 PAGE_TEMPLATE = """
 <!doctype html>
 <html lang="uk">
@@ -63,6 +96,7 @@ PAGE_TEMPLATE = """
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="refresh" content="60">
   <title>{page_title}</title>
+  {head_extras}
   <style>
     body {{
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -78,6 +112,20 @@ PAGE_TEMPLATE = """
       padding: 28px;
       border-radius: 14px;
       box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }}
+    .site-logo {{
+      margin: 0 0 1.25rem;
+      text-align: center;
+    }}
+    .site-logo a {{
+      display: inline-block;
+      line-height: 0;
+    }}
+    .site-logo img {{
+      max-height: 64px;
+      width: auto;
+      height: auto;
+      vertical-align: middle;
     }}
     h1, h2, h3 {{
       line-height: 1.25;
@@ -166,6 +214,7 @@ PAGE_TEMPLATE = """
 </head>
 <body>
   <main>
+    {logo}
     {content}
     {footer}
   </main>
@@ -377,6 +426,8 @@ def index():
             content=content,
             footer=page_footer_html(),
             page_title=escape(page_title_text()),
+            head_extras=logo_head_extras(),
+            logo=logo_body_html(),
         ),
         mimetype="text/html",
     )
