@@ -139,6 +139,49 @@ PAGE_TEMPLATE = """
   <title>{page_title}</title>
   {head_extras}
   <style>
+    :root {{
+      color-scheme: light dark;
+      --bg-body: #fafafa;
+      --bg-card: #ffffff;
+      --text: #222222;
+      --text-secondary: #555555;
+      --text-muted: #666666;
+      --border: #dddddd;
+      --border-soft: #eeeeee;
+      --code-bg: #f2f2f2;
+      --mark-bg: #fff3bf;
+      --mark-text: inherit;
+      --link: #1a5fb4;
+      --details-border: #e8e8e8;
+      --details-bg: #fcfcfc;
+      --summary-bg: #f4f4f4;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --scrollbar-track: #ececec;
+      --scrollbar-thumb: #a8a8a8;
+      --scrollbar-thumb-hover: #888888;
+    }}
+    @media (prefers-color-scheme: dark) {{
+      :root {{
+        --bg-body: #121212;
+        --bg-card: #1e1e1e;
+        --text: #e8e8e8;
+        --text-secondary: #b0b0b0;
+        --text-muted: #9a9a9a;
+        --border: #404040;
+        --border-soft: #333333;
+        --code-bg: #2d2d2d;
+        --mark-bg: #5c4f12;
+        --mark-text: #f5e6a8;
+        --link: #7eb8ff;
+        --details-border: #3d3d3d;
+        --details-bg: #252525;
+        --summary-bg: #2c2c2c;
+        --shadow: rgba(0, 0, 0, 0.4);
+        --scrollbar-track: #333333;
+        --scrollbar-thumb: #666666;
+        --scrollbar-thumb-hover: #888888;
+      }}
+    }}
     html {{
       min-height: 100%;
     }}
@@ -149,16 +192,29 @@ PAGE_TEMPLATE = """
       padding: 0 20px;
       box-sizing: border-box;
       line-height: 1.6;
-      color: #222;
-      background: #fafafa;
+      color: var(--text);
+      background: var(--bg-body);
       min-height: 100%;
     }}
     main {{
-      background: white;
+      background: var(--bg-card);
+      color: var(--text);
       padding: 28px;
       border-radius: 14px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 12px var(--shadow);
       overflow-x: hidden;
+    }}
+    article.md-body a {{
+      color: var(--link);
+    }}
+    article.md-body a:visited {{
+      color: var(--link);
+      opacity: 0.88;
+    }}
+    article.md-body hr {{
+      border: none;
+      border-top: 1px solid var(--border-soft);
+      margin: 1.25em 0;
     }}
     @media (min-width: 769px) {{
       html {{
@@ -171,22 +227,22 @@ PAGE_TEMPLATE = """
         -webkit-overflow-scrolling: touch;
         scrollbar-gutter: stable;
         scrollbar-width: auto;
-        scrollbar-color: #a8a8a8 #ececec;
+        scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
       }}
       main::-webkit-scrollbar {{
         width: 24px;
       }}
       main::-webkit-scrollbar-track {{
-        background: #ececec;
+        background: var(--scrollbar-track);
         border-radius: 14px;
       }}
       main::-webkit-scrollbar-thumb {{
-        background: #a8a8a8;
+        background: var(--scrollbar-thumb);
         border-radius: 14px;
-        border: 4px solid #ececec;
+        border: 4px solid var(--scrollbar-track);
       }}
       main::-webkit-scrollbar-thumb:hover {{
-        background: #888888;
+        background: var(--scrollbar-thumb-hover);
       }}
     }}
     @media (max-width: 768px) {{
@@ -218,7 +274,7 @@ PAGE_TEMPLATE = """
     }}
     .site-logo-link {{
       font-size: 0.95rem;
-      color: #1a5fb4;
+      color: var(--link);
       text-decoration: none;
     }}
     .site-logo-link:hover {{
@@ -226,14 +282,15 @@ PAGE_TEMPLATE = """
     }}
     h1, h2, h3 {{
       line-height: 1.25;
+      color: var(--text);
     }}
     code {{
-      background: #f2f2f2;
+      background: var(--code-bg);
       padding: 2px 5px;
       border-radius: 4px;
     }}
     pre {{
-      background: #f2f2f2;
+      background: var(--code-bg);
       padding: 12px;
       overflow-x: auto;
       border-radius: 8px;
@@ -243,27 +300,27 @@ PAGE_TEMPLATE = """
       width: 100%;
     }}
     th, td {{
-      border: 1px solid #ddd;
+      border: 1px solid var(--border);
       padding: 8px;
     }}
     blockquote {{
-      border-left: 4px solid #ddd;
+      border-left: 4px solid var(--border);
       margin-left: 0;
       padding-left: 16px;
-      color: #555;
+      color: var(--text-secondary);
     }}
     mark {{
-      background-color: #fff3bf;
-      color: inherit;
+      background-color: var(--mark-bg);
+      color: var(--mark-text);
       padding: 0.05em 0.25em;
       border-radius: 4px;
     }}
     article.md-body details.section-collapse {{
-      border: 1px solid #e8e8e8;
+      border: 1px solid var(--details-border);
       border-radius: 10px;
       margin: 0.75em 0;
       padding: 0 12px 10px;
-      background: #fcfcfc;
+      background: var(--details-bg);
     }}
     article.md-body details.section-collapse > summary {{
       cursor: pointer;
@@ -271,7 +328,7 @@ PAGE_TEMPLATE = """
       margin: 0 -12px;
       padding: 10px 14px;
       border-radius: 10px 10px 0 0;
-      background: #f4f4f4;
+      background: var(--summary-bg);
     }}
     article.md-body details.section-collapse > summary::-webkit-details-marker {{
       display: none;
@@ -301,10 +358,10 @@ PAGE_TEMPLATE = """
       font-weight: 600;
     }}
     .page-footer {{
-      color: #666;
+      color: var(--text-muted);
       font-size: 13px;
       margin-top: 30px;
-      border-top: 1px solid #eee;
+      border-top: 1px solid var(--border-soft);
       padding-top: 12px;
     }}
   </style>
