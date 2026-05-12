@@ -424,13 +424,35 @@ PAGE_TEMPLATE = """
       color: var(--text);
       background: var(--details-bg);
     }}
-    nav.md-outline {{
+    details.md-outline-collapse {{
       margin: 0 0 1.25rem;
-      padding: 12px 14px;
       border: 1px solid var(--details-border);
       border-radius: 10px;
       background: var(--details-bg);
       font-size: 0.95rem;
+    }}
+    details.md-outline-collapse > summary {{
+      cursor: pointer;
+      list-style: none;
+      margin: 0;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: var(--summary-bg);
+      color: var(--text);
+      font-weight: 600;
+    }}
+    details.md-outline-collapse > summary::-webkit-details-marker {{
+      display: none;
+    }}
+    details.md-outline-collapse > summary::marker {{
+      content: '';
+    }}
+    details.md-outline-collapse[open] > summary {{
+      border-radius: 10px 10px 0 0;
+    }}
+    nav.md-outline {{
+      margin: 0;
+      padding: 8px 14px 12px;
     }}
     nav.md-outline > .toc {{
       margin: 0;
@@ -687,13 +709,15 @@ _MD_EXTENSIONS = [
 
 
 def _outline_nav_html(toc_fragment):
-    """Wrap non-empty TOC fragment from Markdown in a nav (h1–h3 only)."""
+    """Wrap non-empty TOC in a collapsed-by-default <details> (h1–h3 only)."""
     if not toc_fragment or 'href="#' not in toc_fragment:
         return ""
     return (
-        '<nav class="md-outline" aria-label="Зміст сторінки">'
+        '<details class="md-outline-collapse">'
+        '<summary id="md-outline-summary">Зміст сторінки</summary>'
+        '<nav class="md-outline" aria-labelledby="md-outline-summary">'
         f"{toc_fragment}"
-        "</nav>"
+        "</nav></details>"
     )
 
 
