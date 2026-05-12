@@ -1,5 +1,6 @@
 from flask import Flask, Response
 import markdown
+from markdown.extensions.toc import TocExtension
 import os
 import time
 import hashlib
@@ -423,6 +424,36 @@ PAGE_TEMPLATE = """
       color: var(--text);
       background: var(--details-bg);
     }}
+    nav.md-outline {{
+      margin: 0 0 1.25rem;
+      padding: 12px 14px;
+      border: 1px solid var(--details-border);
+      border-radius: 10px;
+      background: var(--details-bg);
+      font-size: 0.95rem;
+    }}
+    nav.md-outline > .toc {{
+      margin: 0;
+    }}
+    nav.md-outline .toc ul {{
+      margin: 0.35em 0 0;
+      padding-left: 1.15rem;
+      list-style: disc;
+    }}
+    nav.md-outline .toc > ul {{
+      margin: 0;
+      padding-left: 1.1rem;
+    }}
+    nav.md-outline .toc li {{
+      margin: 0.2em 0;
+    }}
+    nav.md-outline .toc a {{
+      color: var(--link);
+      text-decoration: none;
+    }}
+    nav.md-outline .toc a:hover {{
+      text-decoration: underline;
+    }}
   </style>
 </head>
 <body>
@@ -438,6 +469,7 @@ PAGE_TEMPLATE = """
         </button>
       </div>
     </div>
+    {toc}
     {content}
     {footer}
   </main>
@@ -457,6 +489,7 @@ PAGE_TEMPLATE = """
       var summary = document.createElement("summary");
       var inner = document.createElement(h.tagName.toLowerCase());
       inner.innerHTML = h.innerHTML;
+      if (h.id) inner.id = h.id;
       summary.appendChild(inner);
       details.appendChild(summary);
       h.replaceWith(details);
@@ -645,9 +678,29 @@ def read_status():
     return "No sync status yet"
 
 
+_MD_EXTENSIONS = [
+    "tables",
+    "fenced_code",
+    TocExtension(toc_depth="1-3"),
+    "pymdownx.mark",
+]
+
+
+def _outline_nav_html(toc_fragment):
+    """Wrap non-empty TOC fragment from Markdown in a nav (h1–h3 only)."""
+    if not toc_fragment or 'href="#' not in toc_fragment:
+        return ""
+    return (
+        '<nav class="md-outline" aria-label="Зміст сторінки">'
+        f"{toc_fragment}"
+        "</nav>"
+    )
+
+
 @app.route("/")
 def index():
     note = escape(local_note_basename())
+    toc = ""
     if not os.path.exists(LOCAL_FILE):
         content = (
             f'<article class="md-body"><h1>{note} not found</h1>'
@@ -660,19 +713,14 @@ def index():
         if not md_text.strip():
             content = f'<article class="md-body"><h1>{note} is empty</h1></article>'
         else:
-            html = markdown.markdown(
-                md_text,
-                extensions=[
-                    "tables",
-                    "fenced_code",
-                    "toc",
-                    "pymdownx.mark",
-                ],
-            )
+            md = markdown.Markdown(extensions=_MD_EXTENSIONS)
+            html = md.convert(md_text)
+            toc = _outline_nav_html(md.toc)
             content = f'<article class="md-body">{html}</article>'
 
     return Response(
         PAGE_TEMPLATE.format(
+            toc=toc,
             content=content,
             footer=page_footer_html(),
             page_title=escape(page_title_text()),
