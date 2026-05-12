@@ -714,7 +714,7 @@ def _outline_nav_html(toc_fragment):
         return ""
     return (
         '<details class="md-outline-collapse">'
-        '<summary id="md-outline-summary">Зміст сторінки</summary>'
+        '<summary id="md-outline-summary">☰ Зміст </summary>'
         '<nav class="md-outline" aria-labelledby="md-outline-summary">'
         f"{toc_fragment}"
         "</nav></details>"

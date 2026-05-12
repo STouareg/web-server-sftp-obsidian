@@ -9,17 +9,16 @@ When this session includes **meaningful edits** to the repository (code, tests, 
 
 ## Format
 
-- One line **subject** (imperative mood, ~72 characters or less), optionally prefixed with a type: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, etc.
-- If the change is non-obvious, add a **blank line** and 1–3 bullet lines for the **body** (what/why, not implementation trivia).
+- **Default: one line only** (imperative mood, ≤72 chars), with an optional type prefix: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, etc. This copies cleanly into `git commit -m "…"`.
+- Add a **body** only when needed. If you include a body, avoid **straight double quotes** (`"`) inside suggested lines so the user’s shell does not break; use single quotes or rephrase.
+- For multiline commits from the terminal, prefer `git commit -m "subject" -m "body line"` or `git commit` (open editor) instead of one fragile quoted string.
 
 ## Example block (use a markdown heading so it is easy to spot)
 
 ```markdown
 ### Suggested commit
 
-fix: correct anchor ids after collapsible headings
-
-- Preserve heading `id` when wrapping in `<details>` so TOC links work.
+fix: preserve heading ids inside collapsible sections
 ```
 
 If there were **no** file changes, omit the suggestion.
