@@ -476,6 +476,43 @@ PAGE_TEMPLATE = """
     nav.md-outline .toc a:hover {{
       text-decoration: underline;
     }}
+    .scroll-to-top {{
+      position: fixed;
+      right: max(20px, env(safe-area-inset-right));
+      bottom: max(20px, env(safe-area-inset-bottom));
+      z-index: 20;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+      padding: 11px;
+      min-width: 44px;
+      min-height: 44px;
+      box-sizing: border-box;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      box-shadow: 0 2px 12px var(--shadow);
+      cursor: pointer;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(8px);
+      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease,
+        border-color 0.15s ease, color 0.15s ease;
+    }}
+    .scroll-to-top.is-visible {{
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }}
+    .scroll-to-top:hover {{
+      border-color: var(--text-muted);
+      color: var(--text);
+    }}
+    .scroll-to-top svg {{
+      flex-shrink: 0;
+    }}
   </style>
 </head>
 <body>
@@ -495,6 +532,9 @@ PAGE_TEMPLATE = """
     {content}
     {footer}
   </main>
+  <button type="button" class="scroll-to-top" aria-label="На початок" title="На початок" hidden>
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
+  </button>
   <script>
   (function () {{
     function level(tag) {{
@@ -569,6 +609,36 @@ PAGE_TEMPLATE = """
         apply(this.getAttribute("data-theme-value"));
       }});
     syncButtons();
+  }})();
+  (function () {{
+    var btn = document.querySelector(".scroll-to-top");
+    var main = document.querySelector("main");
+    if (!btn) return;
+    function scrollRoot() {{
+      var mq = window.matchMedia("(min-width: 769px)");
+      if (mq.matches && main) return main;
+      return null;
+    }}
+    function scrollTop() {{
+      var root = scrollRoot();
+      if (root) root.scrollTo({{ top: 0, behavior: "smooth" }});
+      else window.scrollTo({{ top: 0, behavior: "smooth" }});
+    }}
+    function scrolled() {{
+      var root = scrollRoot();
+      if (root) return root.scrollTop > 200;
+      return window.scrollY > 200;
+    }}
+    function update() {{
+      var show = scrolled();
+      btn.hidden = !show;
+      btn.classList.toggle("is-visible", show);
+    }}
+    btn.addEventListener("click", scrollTop);
+    if (main) main.addEventListener("scroll", update, {{ passive: true }});
+    window.addEventListener("scroll", update, {{ passive: true }});
+    window.addEventListener("resize", update, {{ passive: true }});
+    update();
   }})();
   </script>
 </body>
