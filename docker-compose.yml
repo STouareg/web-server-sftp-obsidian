@@ -27,6 +27,9 @@ services:
       - LOGO_URL
       - LOGO_LINK_URL
       - LOGO_LINK_TEXT
+      - TELEGRAM_BOT_TOKEN
+      - TELEGRAM_CHAT_ID
+      - TELEGRAM_ERROR_COOLDOWN_SECONDS=${TELEGRAM_ERROR_COOLDOWN_SECONDS:-1800}
 
     volumes:
       - /opt/ks-web/data:/data

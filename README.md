@@ -50,6 +50,9 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 | `LOGO_LINK_TEXT` | No | *(none)* | If set, adds a **second line** of text under the logo linking to the same `LOGO_LINK_URL`. Omit for **image-only** (clickable logo, no caption). |
 | `PAGE_FOOTER` | No | `All rights reserved.` | Text at the bottom of **`/`**. If the variable is **set but empty**, the footer is **omitted**. Use any short line you like (© notice, etc.). |
 | `CHECK_INTERVAL_SECONDS` | No | `300` | Seconds between SFTP sync attempts |
+| `TELEGRAM_BOT_TOKEN` | No | — | Bot token from [@BotFather](https://t.me/BotFather); with `TELEGRAM_CHAT_ID`, sends alerts on SFTP/config errors |
+| `TELEGRAM_CHAT_ID` | No | — | Chat or group id (for groups, add the bot and use the numeric id, often negative) |
+| `TELEGRAM_ERROR_COOLDOWN_SECONDS` | No | `1800` | Minimum seconds between repeated Telegram alerts for the **same** error (avoids spam every sync interval) |
 
 ## HTTP routes
 
@@ -69,6 +72,8 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 ## Failures and improving error output
 
 **Today:** sync problems are summarized in one line written to `/data/status.txt` and returned on **`/status`** (and printed to container **stdout** with a full **Python traceback** on errors). Open **container logs** in Portainer or `docker logs web-sftp-obsidian` for details. The main page **`/`** shows a small **footer** from **`PAGE_FOOTER`** (default *All rights reserved.*), not the live sync line.
+
+If **`TELEGRAM_BOT_TOKEN`** and **`TELEGRAM_CHAT_ID`** are set, the app also sends a Telegram message when configuration is incomplete or an SFTP sync attempt fails (connection, auth, missing remote file, etc.). The same error is not re-sent until **`TELEGRAM_ERROR_COOLDOWN_SECONDS`** (default 30 minutes) elapses; a successful sync clears that throttle so the next failure notifies again.
 
 **Ways to improve output when something fails** (optional follow-ups for this repo or your fork):
 

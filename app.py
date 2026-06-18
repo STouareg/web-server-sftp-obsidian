@@ -7,6 +7,8 @@ import hashlib
 import threading
 import tempfile
 import traceback
+import json
+import urllib.request
 import paramiko
 from html import escape
 from datetime import datetime
@@ -21,6 +23,15 @@ SFTP_PASSWORD = os.getenv("SFTP_PASSWORD")
 SFTP_REMOTE_FILE = os.getenv("SFTP_REMOTE_FILE", "/note.md")
 LOCAL_FILE = os.getenv("LOCAL_FILE", "/data/note.md")
 CHECK_INTERVAL_SECONDS = int(os.getenv("CHECK_INTERVAL_SECONDS", "300"))
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+TELEGRAM_ERROR_COOLDOWN_SECONDS = int(
+    os.getenv("TELEGRAM_ERROR_COOLDOWN_SECONDS", "1800")
+)
+
+_telegram_lock = threading.Lock()
+_last_telegram_alert_at = 0.0
+_last_telegram_alert_key = None
 
 _tz_name = os.getenv("TZ", "Europe/Kyiv")
 try:
@@ -661,6 +672,67 @@ def write_status(message):
         pass
 
 
+def telegram_configured():
+    return bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
+
+
+def _reset_telegram_error_state():
+    global _last_telegram_alert_at, _last_telegram_alert_key
+
+    with _telegram_lock:
+        _last_telegram_alert_at = 0.0
+        _last_telegram_alert_key = None
+
+
+def notify_telegram_error(title, detail, alert_key=None):
+    if not telegram_configured():
+        return
+
+    global _last_telegram_alert_at, _last_telegram_alert_key
+
+    key = alert_key or f"{title}:{detail}"
+    now_ts = time.monotonic()
+
+    with _telegram_lock:
+        if (
+            _last_telegram_alert_key == key
+            and (now_ts - _last_telegram_alert_at) < TELEGRAM_ERROR_COOLDOWN_SECONDS
+        ):
+            return
+        _last_telegram_alert_at = now_ts
+        _last_telegram_alert_key = key
+
+    host_label = SFTP_HOST or "?"
+    text = (
+        f"⚠️ web-sftp-obsidian\n"
+        f"{title}\n\n"
+        f"Час: {now()}\n"
+        f"SFTP: {host_label}:{SFTP_PORT}\n"
+        f"Файл: {SFTP_REMOTE_FILE or '?'}\n\n"
+        f"{detail}"
+    )
+    if len(text) > 4000:
+        text = text[:3997] + "..."
+
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = json.dumps(
+        {"chat_id": TELEGRAM_CHAT_ID, "text": text},
+        ensure_ascii=False,
+    ).encode("utf-8")
+
+    try:
+        req = urllib.request.Request(
+            url,
+            data=payload,
+            method="POST",
+            headers={"Content-Type": "application/json; charset=utf-8"},
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            resp.read()
+    except Exception as e:
+        print(f"[{now()}] Telegram alert failed: {e}", flush=True)
+
+
 def file_hash(path):
     if not os.path.exists(path):
         return None
@@ -687,7 +759,13 @@ def validate_config():
             missing.append(name)
 
     if missing:
-        write_status(f"Missing required environment variables: {', '.join(missing)}")
+        msg = f"Missing required environment variables: {', '.join(missing)}"
+        write_status(msg)
+        notify_telegram_error(
+            "Помилка конфігурації SFTP",
+            f"Не задано змінні середовища: {', '.join(missing)}",
+            alert_key=f"config:{','.join(sorted(missing))}",
+        )
         return False
 
     return True
@@ -730,6 +808,8 @@ def download_from_sftp():
             os.remove(tmp_path)
             write_status("No changes detected")
 
+        _reset_telegram_error_state()
+
     except Exception as e:
         try:
             if os.path.exists(tmp_path):
@@ -737,8 +817,14 @@ def download_from_sftp():
         except Exception:
             pass
 
-        write_status(f"SFTP sync failed: {e}")
+        err_text = str(e) or type(e).__name__
+        write_status(f"SFTP sync failed: {err_text}")
         traceback.print_exc()
+        notify_telegram_error(
+            "Помилка SFTP-синхронізації",
+            err_text,
+            alert_key=f"sync:{type(e).__name__}:{err_text}",
+        )
 
     finally:
         try:
