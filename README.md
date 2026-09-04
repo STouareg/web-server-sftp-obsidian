@@ -1,6 +1,6 @@
 # web-server-sftp-obsidian
 
-Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, stores it on a volume, and serves it as **HTML**. Intended for homelab setups (for example **Portainer** on an **Orange Pi** or similar ARM board) with notes synced from a NAS or another host.
+Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, stores it on a volume, and serves it as **HTML**. It is deployed as an infrastructure-owned Docker Compose service, with notes synced from a NAS or another host.
 
 ## What runs in the container
 
@@ -8,6 +8,7 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 - **Gunicorn** (one sync worker) serves the web app on port **8080** inside the container; `gunicorn.conf.py` starts the SFTP sync thread in `post_fork` so it runs with the worker process.
 - A background thread runs an SFTP sync on a fixed interval (default **5 minutes**).
 - The synced file is compared with a SHA-256 hash of the previous copy; the file on disk is only replaced when the content changes.
+- Prometheus metrics at **`/metrics`** report the latest sync result, timestamps, duration, and attempt/failure counters.
 
 ## Quick start (Docker Compose)
 
@@ -50,9 +51,6 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 | `LOGO_LINK_TEXT` | No | *(none)* | If set, adds a **second line** of text under the logo linking to the same `LOGO_LINK_URL`. Omit for **image-only** (clickable logo, no caption). |
 | `PAGE_FOOTER` | No | `All rights reserved.` | Text at the bottom of **`/`**. If the variable is **set but empty**, the footer is **omitted**. Use any short line you like (© notice, etc.). |
 | `CHECK_INTERVAL_SECONDS` | No | `300` | Seconds between SFTP sync attempts |
-| `TELEGRAM_BOT_TOKEN` | No | — | Bot token from [@BotFather](https://t.me/BotFather); with `TELEGRAM_CHAT_ID`, sends alerts on SFTP/config errors |
-| `TELEGRAM_CHAT_ID` | No | — | Chat or group id (for groups, add the bot and use the numeric id, often negative) |
-| `TELEGRAM_ERROR_COOLDOWN_SECONDS` | No | `1800` | Minimum seconds between repeated Telegram alerts for the **same** error (avoids spam every sync interval) |
 
 ## HTTP routes
 
@@ -62,6 +60,7 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 | `/raw` | Plain text of the synced file |
 | `/status` | Last SFTP sync line (same text as written to `/data/status.txt`) |
 | `/health` | Plain `OK` for health checks |
+| `/metrics` | Prometheus metrics for SFTP synchronization health |
 
 ### Page rendering (Obsidian-friendly)
 
@@ -71,9 +70,16 @@ Small Flask app in Docker: periodically pulls a Markdown file over **SFTP**, sto
 
 ## Failures and improving error output
 
-**Today:** sync problems are summarized in one line written to `/data/status.txt` and returned on **`/status`** (and printed to container **stdout** with a full **Python traceback** on errors). Open **container logs** in Portainer or `docker logs web-sftp-obsidian` for details. The main page **`/`** shows a small **footer** from **`PAGE_FOOTER`** (default *All rights reserved.*), not the live sync line.
+**Today:** sync problems are summarized in one line written to `/data/status.txt` and returned on **`/status`** (and printed to container **stdout** with a full **Python traceback** on errors). Run `docker logs web-sftp-obsidian` for details. The main page **`/`** shows a small **footer** from **`PAGE_FOOTER`** (default *All rights reserved.*), not the live sync line.
 
-If **`TELEGRAM_BOT_TOKEN`** and **`TELEGRAM_CHAT_ID`** are set, the app also sends a Telegram message when configuration is incomplete or an SFTP sync attempt fails (connection, auth, missing remote file, etc.). The same error is not re-sent until **`TELEGRAM_ERROR_COOLDOWN_SECONDS`** (default 30 minutes) elapses; a successful sync clears that throttle so the next failure notifies again.
+The app does not send notifications directly. Prometheus scrapes **`/metrics`**, evaluates alert rules, and passes firing alerts to Alertmanager. Alertmanager owns notification routing and Telegram credentials, so this application only needs its SFTP credentials.
+
+The exported metrics are:
+
+- `web_sftp_sync_last_attempt_success` — `1` for success or `0` for failure;
+- `web_sftp_sync_last_attempt_timestamp_seconds` and `web_sftp_sync_last_success_timestamp_seconds`;
+- `web_sftp_sync_last_duration_seconds`;
+- `web_sftp_sync_attempts_total` and `web_sftp_sync_failures_total`.
 
 **Ways to improve output when something fails** (optional follow-ups for this repo or your fork):
 
@@ -83,21 +89,22 @@ If **`TELEGRAM_BOT_TOKEN`** and **`TELEGRAM_CHAT_ID`** are set, the app also sen
 - **Health check**: optionally make **`/health`** reflect sync health (for example HTTP 503 if the last sync failed and there is no local file yet), so orchestrators mark the container unhealthy; keep a separate **`/health/live`** if you still want a trivial liveness probe.
 - **User-facing messages**: map common Paramiko/socket errors to short explanations (timeout, refused connection, auth failed, path not found) so the footer is easier to read than raw exceptions.
 
-## Portainer
+## Production deployment
 
-- **“pull access denied for web-sftp-obsidian”**: Compose was trying to **pull** `web-sftp-obsidian:local` from Docker Hub, but that name is only meant as a **local tag after `docker compose build`**. This repo sets **`pull_policy: build`** so a normal **deploy / up** builds from the Git `Dockerfile` instead of pulling. If you still see pull errors, turn off **“Always pull latest image”** / **re-pull only** for this stack when the image is not on a registry, or run a one-time **Build** from Portainer before start.
-- Add **environment variables on the stack** in Portainer using the **same names** as in the table below (`SFTP_HOST`, `SFTP_USER`, and so on). Compose substitutes `${VAR}` at deploy time and passes them into the container; **no changes to `app.py` are required** (it already uses `os.getenv`). **`TZ`** defaults to **`Europe/Kyiv`** if omitted. Optional display variables (`PAGE_FOOTER`, `LOGO_URL`, `LOGO_LINK_URL`, `LOGO_LINK_TEXT`) use **list-style** entries in `docker-compose.yml`: they are injected **only when** you define them in the stack or in a `.env` file next to the compose file—so they are not sent as empty strings and the app can keep its built-in defaults when you omit them.
-- You do **not** need a `.env` file on the server when values come from Portainer.
-- The sample compose binds **`/opt/ks-web/data:/data`**. Create that directory on the Orange Pi (or change the left-hand path to match your host).
-- **ARM (Orange Pi PC Plus, armv7)**: The image uses **`python:3.12-slim-bookworm`** (Debian/glibc), not Alpine. On **32-bit ARM musl** (Alpine), `cryptography` often has no prebuilt wheel and tries to compile with Rust, which fails (as in Portainer logs: `arm-unknown-linux-musleabihf`). Debian slim gets normal manylinux **armv7l** wheels from PyPI instead. Some dependencies (for example **PyNaCl**) may still build **cffi** from source on armv7; the Dockerfile installs **`build-essential`** so the linker and C library headers (`stdlib.h`, `crti.o`, …) are present during `pip install`, then removes those packages to keep the final image smaller.
+Production deployment is owned by the sibling `infrastructure` repository. Its
+`compose/apps/compose.yml` builds this repository, attaches the service to the proxy and
+monitoring networks, and preserves the `notes_data` volume.
 
-### Building on a Mac vs on the Orange Pi
+From the `infrastructure` repository root, run:
 
-For **linux/arm/v7** (32-bit Pi), a Mac build needs **`docker buildx build --platform linux/arm/v7`**, which usually runs under **QEMU emulation**. That is often **slower** than building **natively on the Pi**, especially for compiling extensions.
+```bash
+SKIP_ECHERHA=1 SKIP_MAP=1 SKIP_INFRA_BOT=1 \
+  ./scripts/deploy.sh 167.235.233.24
+```
 
-If your Mac is Apple Silicon (**arm64**), a default `docker build` produces an **arm64** image, which will **not** run on an **armv7** Orange Pi unless you always pass the correct `--platform` and accept emulation time (or use a remote ARM builder).
-
-Practical options: fix the Dockerfile and **build on the Pi** in Portainer; or build on the Mac with **buildx + `--platform linux/arm/v7` + `--push`** to a registry, then on the Pi use **`image: your-registry/web-sftp-obsidian:tag`** and **remove the `build:` section** from compose so the Pi only pulls layers (no compile on the Pi).
+The infrastructure `.env` is maintained on the server and is not replaced by the deploy.
+Prometheus notification routing and Telegram credentials belong to Alertmanager, not to
+this application.
 
 ## Local development (without Gunicorn)
 
@@ -112,7 +119,7 @@ This starts the Flask development server on `0.0.0.0:8080` with the same SFTP ba
 
 ## Security notes (short)
 
-- Prefer SSH **keys** and a dedicated SFTP user on the server when you can; passwords in a local `.env` or in Portainer stack env are convenient but protect Portainer and shell access on the host.
+- Prefer SSH **keys** and a dedicated SFTP user on the server when you can. Protect the infrastructure `.env` and shell access to the host.
 - Markdown is rendered with Python-Markdown; **raw HTML in the `.md` file is passed through** to the browser. Only sync notes you trust, or add sanitization if the source is not fully trusted.
 - Host SSH keys are not pinned in the current code; on a trusted LAN this is a common trade-off.
 

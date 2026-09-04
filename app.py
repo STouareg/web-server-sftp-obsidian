@@ -7,8 +7,6 @@ import hashlib
 import threading
 import tempfile
 import traceback
-import json
-import urllib.request
 import paramiko
 from html import escape
 from datetime import datetime
@@ -23,15 +21,16 @@ SFTP_PASSWORD = os.getenv("SFTP_PASSWORD")
 SFTP_REMOTE_FILE = os.getenv("SFTP_REMOTE_FILE", "/note.md")
 LOCAL_FILE = os.getenv("LOCAL_FILE", "/data/note.md")
 CHECK_INTERVAL_SECONDS = int(os.getenv("CHECK_INTERVAL_SECONDS", "300"))
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "").strip()
-TELEGRAM_ERROR_COOLDOWN_SECONDS = int(
-    os.getenv("TELEGRAM_ERROR_COOLDOWN_SECONDS", "1800")
-)
 
-_telegram_lock = threading.Lock()
-_last_telegram_alert_at = 0.0
-_last_telegram_alert_key = None
+_metrics_lock = threading.Lock()
+_sync_metrics = {
+    "attempts_total": 0,
+    "failures_total": 0,
+    "last_attempt_success": None,
+    "last_attempt_timestamp": 0.0,
+    "last_success_timestamp": 0.0,
+    "last_duration_seconds": 0.0,
+}
 
 _tz_name = os.getenv("TZ", "Europe/Kyiv")
 try:
@@ -672,65 +671,49 @@ def write_status(message):
         pass
 
 
-def telegram_configured():
-    return bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
+def record_sync_result(success, started_at):
+    finished_at = time.time()
+    with _metrics_lock:
+        _sync_metrics["attempts_total"] += 1
+        _sync_metrics["last_attempt_success"] = success
+        _sync_metrics["last_attempt_timestamp"] = finished_at
+        _sync_metrics["last_duration_seconds"] = max(0.0, finished_at - started_at)
+        if success:
+            _sync_metrics["last_success_timestamp"] = finished_at
+        else:
+            _sync_metrics["failures_total"] += 1
 
 
-def _reset_telegram_error_state():
-    global _last_telegram_alert_at, _last_telegram_alert_key
+def prometheus_metrics():
+    with _metrics_lock:
+        metrics = dict(_sync_metrics)
 
-    with _telegram_lock:
-        _last_telegram_alert_at = 0.0
-        _last_telegram_alert_key = None
-
-
-def notify_telegram_error(title, detail, alert_key=None):
-    if not telegram_configured():
-        return
-
-    global _last_telegram_alert_at, _last_telegram_alert_key
-
-    key = alert_key or f"{title}:{detail}"
-    now_ts = time.monotonic()
-
-    with _telegram_lock:
-        if (
-            _last_telegram_alert_key == key
-            and (now_ts - _last_telegram_alert_at) < TELEGRAM_ERROR_COOLDOWN_SECONDS
-        ):
-            return
-        _last_telegram_alert_at = now_ts
-        _last_telegram_alert_key = key
-
-    host_label = SFTP_HOST or "?"
-    text = (
-        f"⚠️ web-sftp-obsidian\n"
-        f"{title}\n\n"
-        f"Час: {now()}\n"
-        f"SFTP: {host_label}:{SFTP_PORT}\n"
-        f"Файл: {SFTP_REMOTE_FILE or '?'}\n\n"
-        f"{detail}"
-    )
-    if len(text) > 4000:
-        text = text[:3997] + "..."
-
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    payload = json.dumps(
-        {"chat_id": TELEGRAM_CHAT_ID, "text": text},
-        ensure_ascii=False,
-    ).encode("utf-8")
-
-    try:
-        req = urllib.request.Request(
-            url,
-            data=payload,
-            method="POST",
-            headers={"Content-Type": "application/json; charset=utf-8"},
-        )
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            resp.read()
-    except Exception as e:
-        print(f"[{now()}] Telegram alert failed: {e}", flush=True)
+    host = (SFTP_HOST or "unknown").replace("\\", "\\\\").replace('"', '\\"')
+    labels = f'sftp_instance="{host}:{SFTP_PORT}"'
+    lines = [
+        "# HELP web_sftp_sync_attempts_total Total SFTP synchronization attempts.",
+        "# TYPE web_sftp_sync_attempts_total counter",
+        f'web_sftp_sync_attempts_total{{{labels}}} {metrics["attempts_total"]}',
+        "# HELP web_sftp_sync_failures_total Total failed SFTP synchronization attempts.",
+        "# TYPE web_sftp_sync_failures_total counter",
+        f'web_sftp_sync_failures_total{{{labels}}} {metrics["failures_total"]}',
+        "# HELP web_sftp_sync_last_attempt_timestamp_seconds Unix time of the last completed sync attempt.",
+        "# TYPE web_sftp_sync_last_attempt_timestamp_seconds gauge",
+        f'web_sftp_sync_last_attempt_timestamp_seconds{{{labels}}} {metrics["last_attempt_timestamp"]:.3f}',
+        "# HELP web_sftp_sync_last_success_timestamp_seconds Unix time of the last successful sync.",
+        "# TYPE web_sftp_sync_last_success_timestamp_seconds gauge",
+        f'web_sftp_sync_last_success_timestamp_seconds{{{labels}}} {metrics["last_success_timestamp"]:.3f}',
+        "# HELP web_sftp_sync_last_duration_seconds Duration of the last sync attempt.",
+        "# TYPE web_sftp_sync_last_duration_seconds gauge",
+        f'web_sftp_sync_last_duration_seconds{{{labels}}} {metrics["last_duration_seconds"]:.3f}',
+    ]
+    if metrics["last_attempt_success"] is not None:
+        lines.extend([
+            "# HELP web_sftp_sync_last_attempt_success Whether the last sync attempt succeeded (1) or failed (0).",
+            "# TYPE web_sftp_sync_last_attempt_success gauge",
+            f'web_sftp_sync_last_attempt_success{{{labels}}} {int(metrics["last_attempt_success"])}',
+        ])
+    return "\n".join(lines) + "\n"
 
 
 def file_hash(path):
@@ -761,18 +744,15 @@ def validate_config():
     if missing:
         msg = f"Missing required environment variables: {', '.join(missing)}"
         write_status(msg)
-        notify_telegram_error(
-            "Помилка конфігурації SFTP",
-            f"Не задано змінні середовища: {', '.join(missing)}",
-            alert_key=f"config:{','.join(sorted(missing))}",
-        )
         return False
 
     return True
 
 
 def download_from_sftp():
+    started_at = time.time()
     if not validate_config():
+        record_sync_result(False, started_at)
         return
 
     dest_dir = os.path.dirname(os.path.abspath(LOCAL_FILE))
@@ -808,7 +788,7 @@ def download_from_sftp():
             os.remove(tmp_path)
             write_status("No changes detected")
 
-        _reset_telegram_error_state()
+        record_sync_result(True, started_at)
 
     except Exception as e:
         try:
@@ -820,11 +800,7 @@ def download_from_sftp():
         err_text = str(e) or type(e).__name__
         write_status(f"SFTP sync failed: {err_text}")
         traceback.print_exc()
-        notify_telegram_error(
-            "Помилка SFTP-синхронізації",
-            err_text,
-            alert_key=f"sync:{type(e).__name__}:{err_text}",
-        )
+        record_sync_result(False, started_at)
 
     finally:
         try:
@@ -928,6 +904,11 @@ def status():
 @app.route("/health")
 def health():
     return Response("OK", mimetype="text/plain")
+
+
+@app.route("/metrics")
+def metrics():
+    return Response(prometheus_metrics(), mimetype="text/plain; version=0.0.4")
 
 
 if __name__ == "__main__":
