@@ -158,12 +158,19 @@ PAGE_TEMPLATE = """
       else
         document.documentElement.setAttribute("data-theme", "dark");
     }} catch (e) {{}}
+    try {{
+      var zk = "web-sftp-obsidian-zoom";
+      var zv = parseFloat(localStorage.getItem(zk));
+      if (zv >= 0.7 && zv <= 1.6)
+        document.documentElement.style.setProperty("--content-scale", zv);
+    }} catch (e) {{}}
   }})();
   </script>
   {head_extras}
   <style>
     :root {{
       color-scheme: dark;
+      --content-scale: 1;
       --bg-body: #121212;
       --bg-card: #1e1e1e;
       --text: #e8e8e8;
@@ -225,6 +232,9 @@ PAGE_TEMPLATE = """
       border-radius: 14px;
       box-shadow: 0 2px 12px var(--shadow);
       overflow-x: hidden;
+    }}
+    article.md-body {{
+      font-size: calc(1rem * var(--content-scale));
     }}
     article.md-body a {{
       color: var(--link);
@@ -422,6 +432,11 @@ PAGE_TEMPLATE = """
       color: var(--text-secondary);
       cursor: pointer;
     }}
+    .theme-switcher button[data-zoom-step] {{
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }}
     .theme-switcher button svg {{
       flex-shrink: 0;
     }}
@@ -529,6 +544,14 @@ PAGE_TEMPLATE = """
   <main>
     <div class="page-top">
       <div class="page-top-logo">{logo}</div>
+      <div class="theme-switcher" role="group" aria-label="Масштаб тексту">
+        <button type="button" data-zoom-step="-1" aria-label="Зменшити масштаб" title="Зменшити">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/></svg>
+        </button>
+        <button type="button" data-zoom-step="1" aria-label="Збільшити масштаб" title="Збільшити">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+        </button>
+      </div>
       <div class="theme-switcher" role="group" aria-label="Тема оформлення">
         <button type="button" data-theme-value="light" aria-pressed="false" aria-label="Світла тема" title="Світла">
           <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m13.02-13.02l-1.41 1.41"/></svg>
@@ -619,6 +642,62 @@ PAGE_TEMPLATE = """
         apply(this.getAttribute("data-theme-value"));
       }});
     syncButtons();
+  }})();
+  (function () {{
+    var key = "web-sftp-obsidian-zoom";
+    var MIN = 0.7, MAX = 1.6, STEP = 0.1;
+    var HOLD_DELAY = 400, HOLD_INTERVAL = 90;
+    var buttons = document.querySelectorAll("[data-zoom-step]");
+    function round(v) {{ return Math.round(v * 100) / 100; }}
+    function current() {{
+      var v = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue("--content-scale")
+      );
+      if (!(v >= MIN && v <= MAX)) v = 1;
+      return round(v);
+    }}
+    function apply(scale) {{
+      scale = round(Math.min(MAX, Math.max(MIN, scale)));
+      document.documentElement.style.setProperty("--content-scale", scale);
+      try {{ localStorage.setItem(key, scale); }} catch (e) {{}}
+      return scale;
+    }}
+    function bind(btn) {{
+      var step = parseInt(btn.getAttribute("data-zoom-step"), 10) || 0;
+      var delayTimer = null, repeatTimer = null;
+      function tick() {{
+        var next = apply(current() + step * STEP);
+        if ((step < 0 && next <= MIN) || (step > 0 && next >= MAX)) stop();
+      }}
+      function stop() {{
+        if (delayTimer) {{ clearTimeout(delayTimer); delayTimer = null; }}
+        if (repeatTimer) {{ clearInterval(repeatTimer); repeatTimer = null; }}
+      }}
+      function start(e) {{
+        if (e.button != null && e.button !== 0) return;
+        e.preventDefault();
+        stop();
+        tick();
+        delayTimer = setTimeout(function () {{
+          repeatTimer = setInterval(tick, HOLD_INTERVAL);
+        }}, HOLD_DELAY);
+        try {{ btn.setPointerCapture(e.pointerId); }} catch (_) {{}}
+      }}
+      btn.addEventListener("pointerdown", start);
+      btn.addEventListener("pointerup", stop);
+      btn.addEventListener("pointercancel", stop);
+      btn.addEventListener("pointerleave", stop);
+      btn.addEventListener("lostpointercapture", stop);
+      btn.addEventListener("keydown", function (e) {{
+        if (e.repeat) return;
+        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {{
+          e.preventDefault();
+          tick();
+        }}
+      }});
+      btn.addEventListener("contextmenu", function (e) {{ e.preventDefault(); }});
+    }}
+    for (var i = 0; i < buttons.length; i++) bind(buttons[i]);
   }})();
   (function () {{
     var btn = document.querySelector(".scroll-to-top");
